@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+</head>
+
+<body>
+<div id="app" class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Company App</h1>
+
+    <div class="mb-4" v-if="!edit">
+        <h2 class="text-xl font-bold">Add Employee</h2>
+        <form @submit.prevent="addEmployee">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="firstName" class="block mb-1">First Name:</label>
+                    <input v-model="newEmployee.firstName" id="firstName" type="text"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="lastName" class="block mb-1">Last Name:</label>
+                    <input v-model="newEmployee.lastName" id="lastName" type="text"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="position" class="block mb-1">Position:</label>
+                    <input v-model="newEmployee.position" id="position" type="text"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="email" class="block mb-1">Email:</label>
+                    <input v-model="newEmployee.email" id="email" type="email"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="phone" class="block mb-1">Phone:</label>
+                    <input v-model="newEmployee.phone" id="phone" type="tel"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="notes" class="block mb-1">Notes:</label>
+                    <textarea v-model="newEmployee.notes" id="notes"
+                              class="w-full p-2 border border-gray-300 rounded"></textarea>
+                </div>
+                <div>
+                    <label for="managerId" class="block mb-1">Manager:</label>
+                    <select-2 v-model="newEmployee.managerId" id="managerId"
+                            class="w-full p-2 border border-gray-300 rounded">
+                        <option :value="null">None</option>
+                    </select-2>
+                </div>
+                <div class="col-span-2">
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Add Employee</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="mb-4" v-if="edit">
+
+        <h2 class="text-xl font-bold">Edit Employee</h2>
+        <form @submit.prevent="updateEmployee">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="firstName" class="block mb-1">ID:</label>
+                    <input v-model="currentEmployee.id" readonly id="id" type="text"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="firstName" class="block mb-1">First Name:</label>
+                    <input v-model="currentEmployee.firstName" id="firstNameEdit" type="text"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="lastName" class="block mb-1">Last Name:</label>
+                    <input v-model="currentEmployee.lastName" id="lastNameEdit" type="text"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="position" class="block mb-1">Position:</label>
+                    <input v-model="currentEmployee.position" id="positionEdit" type="text"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="email" class="block mb-1">Email:</label>
+                    <input v-model="currentEmployee.email" id="emailEdit" type="email"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="phone" class="block mb-1">Phone:</label>
+                    <input v-model="currentEmployee.phone" id="phoneEdit" type="tel"
+                           class="w-full p-2 border border-gray-300 rounded">
+                </div>
+                <div>
+                    <label for="notes" class="block mb-1">Notes:</label>
+                    <textarea v-model="currentEmployee.notes" id="notesEdit"
+                              class="w-full p-2 border border-gray-300 rounded"></textarea>
+                </div>
+                <div>
+                    <label for="managerId" class="block mb-1">Manager:</label>
+                    <select-2 v-model="currentEmployee.managerId" :value="computedCurrentManager" id="managerIdEdit"
+                            class="w-full p-2 border border-gray-300 rounded">
+                    </select-2>
+                </div>
+                <div class="col-span-2">
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Update Employee</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div>
+        <h2 class="text-xl font-bold">Employees Tree</h2>
+<!--        <ul v-if="Object.values(employeesTree.list).length">-->
+<!--            <li v-for="employee in Object.values(employeesTree.list).filter(el => !el.manager_id)">-->
+<!--                <a @click.prevent="getEmployeesTree(employee.id)" href="#">+</a>{{ employee.first_name }}-->
+<!--                <ul v-if="employee.connection?.length">-->
+<!--                    <li v-for="child in employee.connection">-->
+<!--                        {{ employeesTree.list[child].first_name }}-->
+<!--                    </li>-->
+<!--                </ul>-->
+<!--            </li>-->
+<!--        </ul>-->
+        <ul class="mt-4">
+            <template v-if="Object.values(employeesTree.list).length">
+                <select v-model="perPage">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <employeetreenode @edit-employee="editEmployee" @delete-employee="removeEmployee" @employee-tree="employeeTree" :employeestree="employeesTree" :employee="employee" :key="employee.id" v-for="employee in Object.values(employeesTree.list).filter(el => !el.manager_id)"></employeetreenode>
+                <div class="flex space-x-4">
+                    <a @click.prevent="page = 1; getEmployees(page);" href="#"><<</a>
+                    <a @click.prevent="page = page - 1; getEmployees(page);" href="#">PREV</a>
+                    <a @click.prevent="page = page + 1; getEmployees(page);" href="#">NEXT</a>
+                </div>
+            </template>
+            <template v-else>
+                <li>No employees found.</li>
+            </template>
+        </ul>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    Vue.component('select-2', {
+        template: '<select v-bind:name="name" class="form-control"></select>',
+        props: {
+            name: '',
+            options: {
+                Object
+            },
+            value: null,
+            multiple: {
+                Boolean,
+                default: false
+
+            }
+        },
+        data() {
+            return {
+                select2data: []
+            }
+        },
+        mounted() {
+            this.formatOptions()
+            let vm = this
+            let select = $(this.$el)
+            select
+                .select2({
+                    placeholder: 'Select',
+                    width: '100%',
+                    allowClear: true,
+                    ajax: {
+                        delay: 300,
+                        url: '/api/employees/search',
+                        processResults: function (data) {
+                            // Transforms the top-level key of the response object from 'items' to 'results'
+
+                            return {
+                                results: data.map((el) => {
+                                    return {
+                                        id: el.id,
+                                        text: el.first_name + ' ' + el.last_name,
+                                    }
+                                })
+                            };
+                        }
+                    }
+                })
+                .on('change', function () {
+                    vm.$emit('input', select.val())
+                })
+            // if (select.find("option[value='" + null + "']").length) {
+            //     select.val(null);
+            //     select.trigger('change');
+            // } else {
+            //     // Create a DOM Option and pre-select by default
+            //     const newOption = new Option('null', null, true, true);
+            //     // Append it to the select
+            //     select.append(newOption)
+            //     select.trigger('change');
+            // }
+            select.val(this.value)
+            select.trigger('change')
+        },
+        methods: {
+            formatOptions() {
+                this.select2data.push({ id: '', text: 'Select' })
+                for (let key in this.options) {
+                    this.select2data.push({ id: key, text: this.options[key] })
+                }
+            }
+        },
+        destroyed: function () {
+            $(this.$el).off().select2('destroy')
+        }
+    })
+
+    Vue.component('employeetreenode', {
+        props: ['employee', 'employeestree'],
+        data: function () {
+            return {
+                isOpen: false,
+            }
+        },
+        methods: {
+            openTree() {
+                this.isOpen = !this.isOpen
+                if (!this.employee?.connection?.length) {
+                    this.$emit('employee-tree', this.employee?.id)
+                }
+            },
+            employeeTree(id) {
+                this.$emit('employee-tree', id)
+            },
+            removeEmployee(id) {
+                this.$emit('delete-employee', id)
+            },
+            editEmployee(id) {
+                this.$emit('edit-employee', id)
+            }
+        },
+        template: `
+          <li>
+          <a @click.prevent="openTree" href="#">{{ isOpen ? '-' : '+' }}</a>
+          {{ employee?.id }} {{ employee?.first_name }} {{ employee?.last_name }} ({{ employee?.position }})
+          <a @click.prevent="$emit('edit-employee', employee.id)" href="#">edit</a>
+          <a @click.prevent="$emit('delete-employee', employee.id)" href="#">delete</a>
+          <ul v-show="isOpen" class="ml-4" v-if="employee?.connection?.length">
+            <employeetreenode v-if="child != employee.manager_id" @edit-employee="editEmployee" @delete-employee="removeEmployee" @employee-tree="employeeTree" :employeestree="employeestree" :employee="employeestree?.list[child]" :key="employeestree?.list[child].id"
+                              v-for="child in employee?.connection"> </employeetreenode>
+          </ul>
+          </li>
+        `
+    });
+
+    class Graph{
+        // The graph has only one property which is the adjacency list
+        constructor(list = {}) {
+            this.list = list
+        }
+        // The addNode method takes a node value as parameter and adds it as a key to the adjacencyList if it wasn't previously present
+        addNode(key, node, parent = null) {
+            if (parent && !this.list[parent].connection.includes(key)) this.list[parent].connection.push(key)
+            if (!this.list[key]) this.list[key] = {...node, connection: [], parent: parent};
+        }
+
+        getNode(node) {
+            return this.list[node];
+        }
+        // The removeConnection takes two nodes as parameters, and it removes each node from the other's array of connections.
+        removeNode(node) {
+            const parentNode = this.list[node].parent;
+            const children = [...this.list[node].connection];
+
+            if (parentNode) {
+                const parent = this.getNode(parentNode);
+                this.list[parentNode] = {
+                    ...parent,
+                    connection: parent.connection.filter(el => el !== node).concat(children)
+                };
+            }
+
+            children.length && children.forEach(node => {
+                const item = this.getNode(node);
+
+                console.log(node, item)
+                this.list[item.id] = {
+                    ...item,
+                    parent: parentNode,
+                }
+            })
+
+            delete this.list[node]
+        }
+        // The removeNode method takes a node value as parameter. It removes all connections to that node present in the graph and then deletes the node key from the adj list.
+    }
+
+    const app = new Vue({
+        el: '#app',
+        data: {
+            page: 1,
+            perPage: 10,
+            currentEmployee: null,
+            edit: false,
+            employees: [],
+            employeesTree: {},
+            newEmployee: {
+                firstName: '',
+                lastName: '',
+                position: '',
+                email: '',
+                phone: '',
+                notes: '',
+                managerId: ''
+            }
+        },
+        computed: {
+            computedCurrentManager: function () {
+                console.log(this.currentEmployee.managerId)
+                return this.currentEmployee.managerId ? {
+                    id: this.currentEmployee.managerId,
+                    text: this.employeesTree.list[this.currentEmployee.managerId].first_name + ' ' + this.employeesTree.list[this.currentEmployee.managerId].last_name,
+                } : {};
+            }
+        },
+        watch: {
+            perPage: function (val, old) {
+                this.getEmployees();
+            }
+        },
+        mounted() {
+            this.getEmployees();
+        },
+        methods: {
+            updateEmployee() {
+                axios.put(`/api/employees/${this.currentEmployee.id}`, {
+                    ...this.currentEmployee
+                }).then(response => {
+                    this.edit = false;
+                    this.currentEmployee = null;
+                    this.getEmployees(this.page)
+                }).catch(err => {
+                    console.log(err);
+                })
+            },
+            employeeTree(id) {
+                this.getEmployeesTree(id);
+            },
+            getEmployee(id) {
+                return this.employeesTree.list[id];
+            },
+            getEmployeesTree(id) {
+                axios.get(`/api/employees/${id}/children`)
+                    .then(response => {
+                        const data = response.data;
+                        const graph = new Graph({...this.employeesTree.list});
+                        console.log(graph)
+                        data.forEach(item => {
+                            graph.addNode(item.id, item, id);
+                        })
+                        this.employeesTree = {...graph}
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            },
+            addEmployee() {
+                axios.post('/api/employees', {
+                    firstName: this.newEmployee.firstName,
+                    lastName: this.newEmployee.lastName,
+                    position: this.newEmployee.position,
+                    email: this.newEmployee.email,
+                    phone: this.newEmployee.phone,
+                    notes: this.newEmployee.notes,
+                    managerId: this.newEmployee.managerId
+                })
+                    .then(response => {
+                        this.clearNewEmployeeForm();
+                        this.getEmployees();
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            },
+
+            getEmployees(page = 1) {
+                axios.get(`/api/employees`, {params: {page: page, per_page: this.perPage}})
+                    .then(response => {
+                        const data = response.data;
+                        const graph = new Graph();
+                        data.forEach(item => {
+                            graph.addNode(item.id, item)
+                        })
+                        this.employeesTree = {...graph}
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            },
+            editEmployee(id) {
+                this.currentEmployee = {
+                    id: id,
+                    firstName: this.employeesTree.list[id].first_name,
+                    lastName: this.employeesTree.list[id].last_name,
+                    position: this.employeesTree.list[id].position,
+                    email: this.employeesTree.list[id].email,
+                    phone: this.employeesTree.list[id].phone,
+                    notes: this.employeesTree.list[id].notes,
+                    managerId: this.employeesTree.list[id].manager_id
+                };
+                this.edit = true;
+            },
+            removeEmployee(id) {
+                axios.delete(`/api/employees/${id}`)
+                    .then(response => {
+                        const graph = new Graph(this.employeesTree.list);
+                        graph.removeNode(id);
+
+                        this.employeesTree = {...graph}
+                    })
+            },
+            clearNewEmployeeForm() {
+                this.newEmployee = {
+                    firstName: '',
+                    lastName: '',
+                    position: '',
+                    email: '',
+                    phone: '',
+                    notes: '',
+                    managerId: ''
+                };
+            }
+        }
+    });
+</script>
+</body>
+
+</html>

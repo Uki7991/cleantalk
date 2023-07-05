@@ -1,0 +1,60 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: docker/Dockerfile
+    container_name: test-app
+    image: test-app
+    working_dir: /var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - app-network
+
+  mysql:
+    image: 'mysql:latest'
+    restart: unless-stopped
+    container_name: test-mysql
+    tty: true
+    ports:
+      - '3066:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d/
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-p${DB_PASSWORD}" ]
+      retries: 3
+      timeout: 5s
+
+  nginx:
+    image: nginx:alpine
+    container_name: test-nginx
+    tty: true
+    restart: unless-stopped
+    volumes:
+      - "./:/var/www/html/"
+      - "./docker/nginx/conf.d/:/etc/nginx/conf.d/"
+    ports:
+      - "8080:80"
+    networks:
+      - app-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+networks:
+  app-network:
+    driver: bridge
