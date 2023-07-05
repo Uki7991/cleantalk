@@ -35,7 +35,6 @@ class Kernel
     private function callCommand($command, $params)
     {
         $routes = Route::$routes;
-
         $routeData = $routes['console'][$command];
 
         if (!$routeData) {

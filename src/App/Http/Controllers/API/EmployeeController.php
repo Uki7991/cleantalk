@@ -31,7 +31,10 @@ class EmployeeController
             ->getSQL();
 
         return new JsonResponse(
-            Employee::get($query, [])
+            [
+                'data' => Employee::get($query, []),
+                'last_page' => ceil(db()->fetchNumeric(qb()->select('COUNT(id)')->from('employees')->where('manager_id IS NULL'))[0] / $perPage)
+            ]
         );
     }
 
@@ -39,7 +42,7 @@ class EmployeeController
     {
         $q = $request->query->get('q');
         return new JsonResponse(
-            $q ? Employee::get("SELECT * FROM employees where first_name LIKE ? OR last_name LIKE ? LIMIT 10", ['%'.$q.'%', '%'.$q.'%']) : []
+            $q ? Employee::get("SELECT * FROM employees where first_name LIKE ? OR last_name LIKE ? OR position LIKE ? OR CONCAT(first_name, ' ', last_name) LIKE ? LIMIT 10", ['%'.$q.'%', '%'.$q.'%', '%'.$q.'%', '%'.$q.'%']) : []
         );
     }
 

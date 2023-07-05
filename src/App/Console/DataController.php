@@ -9,11 +9,12 @@ class DataController
 {
     public function seed()
     {
-        var_dump('work');
+        echo "\nStarting seeding... \n\n";
         $faker = Factory::create();
 
         try {
-            for ($i = 1; $i <= 10000; $i++) {
+            $count = 10000;
+            for ($i = 1; $i <= $count; $i++) {
                 $employee = new Employee([
                     'first_name' => $faker->firstName(),
                     'last_name' => $faker->lastName(),
@@ -24,10 +25,15 @@ class DataController
                     'notes' => $faker->randomElement([null, $faker->realText()]),
                 ]);
                 $employee->save();
+
+                $progress = $i * 100 / $count;
+                if (in_array($progress, [20, 40, 60, 80])) {
+                    echo "$progress%... \n";
+                }
             }
         } catch (\Throwable $exception) {
             dd($exception);
         }
-        var_dump('end');
+        echo "\nSeeding completed! \n\n";
     }
 }

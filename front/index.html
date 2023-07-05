@@ -137,15 +137,17 @@
                     <option value="100">100</option>
                 </select>
                 <employeetreenode @edit-employee="editEmployee" @delete-employee="removeEmployee" @employee-tree="employeeTree" :employeestree="employeesTree" :employee="employee" :key="employee.id" v-for="employee in Object.values(employeesTree.list).filter(el => !el.manager_id)"></employeetreenode>
-                <div class="flex space-x-4">
-                    <a @click.prevent="page = 1; getEmployees(page);" href="#"><<</a>
-                    <a @click.prevent="page = page - 1; getEmployees(page);" href="#">PREV</a>
-                    <a @click.prevent="page = page + 1; getEmployees(page);" href="#">NEXT</a>
-                </div>
+
             </template>
             <template v-else>
                 <li>No employees found.</li>
             </template>
+            <div class="flex space-x-4">
+                <a @click.prevent="page = 1; getEmployees(page);" href="#"><<</a>
+                <a @click.prevent="page = page - 1; getEmployees(page);" href="#">PREV</a>
+                <a @click.prevent="page = page + 1; getEmployees(page);" href="#">NEXT</a>
+                <a @click.prevent="page = lastPage; getEmployees(page);" href="#">>></a>
+            </div>
         </ul>
     </div>
 </div>
@@ -191,7 +193,7 @@
                                 results: data.map((el) => {
                                     return {
                                         id: el.id,
-                                        text: el.first_name + ' ' + el.last_name,
+                                        text: el.first_name + ' ' + el.last_name + ' (' + el.position + ')',
                                     }
                                 })
                             };
@@ -311,6 +313,7 @@
         el: '#app',
         data: {
             page: 1,
+            lastPage: 1,
             perPage: 10,
             currentEmployee: null,
             edit: false,
@@ -398,7 +401,8 @@
             getEmployees(page = 1) {
                 axios.get(`/api/employees`, {params: {page: page, per_page: this.perPage}})
                     .then(response => {
-                        const data = response.data;
+                        const data = response.data.data;
+                        this.lastPage = response.data.last_page;
                         const graph = new Graph();
                         data.forEach(item => {
                             graph.addNode(item.id, item)

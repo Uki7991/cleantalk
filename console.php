@@ -11,8 +11,6 @@ require_once __DIR__."/bootstrap/app.php";
 
 $kernel = new Kernel();
 
-$job = new \Src\App\Jobs\FetchStatusFromAIJob(1);
-
 $status = $kernel->handle($_SERVER['argv']);
 
 exit($status);

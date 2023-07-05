@@ -32,8 +32,6 @@ COPY ./composer.lock /var/www/html
 
 WORKDIR /var/www/html
 
-RUN composer install
-
 COPY . /var/www/html
 
 COPY --chown=www:www . /var/www/html

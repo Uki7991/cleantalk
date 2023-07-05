@@ -1,6 +1,8 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 cd /var/www/html
+
+composer install
 
 php console.php data:seed
 
